@@ -1,0 +1,10 @@
+*.ogg
+*.zip
+*.pyc
+dist/
+build/
+_3dlogos.iff/
+temp/
+*.dds
+preview/
+plugins/
