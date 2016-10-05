@@ -1,0 +1,8 @@
+//NBA2K16 ARCHIVE COMMENTS
+//Created by NBA2K16 Explorer v0.40
+//0E
+s000.iff	asdasdasdasdasdasdasd
+f000.iff	qweqweqweqweqweqwe
+led_000.iff	23423423423423423234
+dornas/000.iff	dfdfgdfgdfgdfg
+//0F

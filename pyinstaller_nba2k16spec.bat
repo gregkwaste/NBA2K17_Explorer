@@ -1,0 +1,1 @@
+C:\Python27-x64\Scripts\pyi-makespec.exe -n NBA2K_Explorer -D -F --icon=.\resources\tool_icon.ico -p ..\gk_blender_lib\modules\ nba2k16qt.py --version-file=version.txt

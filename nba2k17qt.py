@@ -29,7 +29,7 @@ from StringIO import StringIO
 # from pylzma import compress
 # from pysideuic.Compiler.qtproxies import QtGui
 from _winreg import *
-from nba2k16commonvars import *
+from nba2k17commonvars import *
 
 # Import Custom Modules/Libraries
 sys.path.append('../gk_blender_lib/modules')

@@ -1,7 +1,7 @@
 ### NBA 2K16 PARSING FUNCTIONS###
 import struct
 import sys
-from nba2k16commonvars import *
+from nba2k17commonvars import *
 import gc
 import pylzma
 sys.path.append('../gk_blender_lib/modules')

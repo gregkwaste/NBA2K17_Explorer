@@ -138,6 +138,9 @@ class Model2k:
     def tell(self):
         return self.__file__.tell()
 
+    def skip_section(self):
+        self.__file__.seek(self.size - self.headersize, 1)
+
     def get_verts(self, vformat, scale):
         if vformat == "R16G16B16A16_SNORM":
             return self.read_vertices_half(scale)

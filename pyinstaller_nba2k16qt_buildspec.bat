@@ -1,0 +1,1 @@
+C:\Python27-x64\Scripts\pyinstaller.exe -n NBA2K_Explorer -D -F --upx-dir=L:\PortableApps\upx391w NBA2K_Explorer.spec

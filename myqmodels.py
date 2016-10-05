@@ -9,7 +9,7 @@ import sys
 import os
 import gc
 from StringIO import StringIO
-from nba2k16commonvars import *
+from nba2k17commonvars import *
 from parsing_functions import *
 from json_parser import *
 from scheduler import *
@@ -310,7 +310,7 @@ class IffEditorWindow(QMainWindow):
 
         # StatusBar
         self.statusBar = QStatusBar(self)
-        self.statusBar.setStatusTip("Coded by gregkwaste Copyright 2015 (c)")
+        self.statusBar.setStatusTip("Coded by gregkwaste Copyright 2016 (c)")
         self.statusBar.setSizeGripEnabled(True)
         self.statusBar.setObjectName("statusBar")
         self.setStatusBar(self.statusBar)
@@ -536,15 +536,12 @@ class IffEditorWindow(QMainWindow):
                 f_name += '.ogg'
                 data = t.read()
             elif typ == 'ZLIB':
-                t.seek(0x00)
+                t.seek(0x0)
                 data = zlib.decompress(t.read(), -15)
                 if struct.unpack('>I', data[0:4])[0] == 0x504B0304:
                     f_name += '.zip'
                 elif struct.unpack('>I', data[0:4])[0] == 0x44445320:
                     f_name += '.dds'
-                else:
-                    f_name += 'xml'
-
             else:
                 t.seek(0)
                 data = t.read()
@@ -575,7 +572,7 @@ class IffEditorWindow(QMainWindow):
         decomp_size = self.archiveContents.data(
             selection[3], Qt.DisplayRole)  # get file decomp_size
 
-        logging.info('Replacing', f_name, off, typ, comp_size)
+        logging.info('{0} {1} {2} {3} {4}'.format('Replacing', f_name, off, typ, comp_size))
 
         location = QFileDialog.getOpenFileName(
             caption="Select file for Import",
@@ -585,11 +582,16 @@ class IffEditorWindow(QMainWindow):
             return
 
         # Store Old File Data
-        self._file.seek(off + 0x4)
+        self._file.seek(0x0)
         if typ == 'LZMA':
-            logging.info('Compressed -Import Func-')
+            logging.info('Compressed LZMA -Import Func-')
+            self._file.seek(off + 0x4)
             temp = self._file.read(comp_size)
             l = pylzma.decompress_compat(temp)
+        elif typ == 'ZLIB':
+            logging.info('Compressed ZLIB -Import Func-')
+            temp = self._file.read(comp_size)
+            l = zlib.decompress_compat(temp, -15)
         else:
             logging.info('No Compression')
             l = self._file.read(decomp_size)

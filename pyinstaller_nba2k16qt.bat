@@ -1,0 +1,1 @@
+C:\Python27-x64\Scripts\pyinstaller.exe -n NBA2K_Explorer -F --icon=.\resources\tool_icon.ico -p ..\gk_blender_lib\modules\ -p C:\Python27-x64\Lib\site-packages myqmodels.py --version-file=version.txt --upx-dir=L:\PortableApps\upx391w --workpath=.\build
