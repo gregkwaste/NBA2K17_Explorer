@@ -14,8 +14,10 @@ from parsing_functions import *
 from json_parser import *
 from scheduler import *
 from dds import *
+from vlc_player import Player
 from _winreg import *
 from subprocess import call
+from time import sleep
 # Compression Libraries
 import zlib
 import pylzma
@@ -23,7 +25,6 @@ import ziptest
 # Logging
 import logging
 logging.basicConfig(level=logging.INFO)
-
 
 class ModelPanel(QDialog):
 
@@ -173,7 +174,7 @@ class AboutDialog(QWidget):
         lab = QLabel()
         lab.setAlignment(Qt.AlignCenter)
         lab.setText(
-            "<P><b><FONT COLOR='#000000' FONT SIZE = 5>NBA 2K16 Explorer v0.40</b></P></br>")
+            "<P><b><FONT COLOR='#000000' FONT SIZE = 5>"+ game_title +" Explorer v0.50</b></P></br>")
         layout.addWidget(lab)
         lab = QLabel()
         lab.setAlignment(Qt.AlignCenter)
@@ -205,7 +206,7 @@ class IffEditorWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super(IffEditorWindow, self).__init__(parent)
-        self.setWindowTitle("NBA 2K16 - Iff Editor")
+        self.setWindowTitle(game_title + " - Iff Editor")
         self.setWindowIcon(QIcon('./resources/tool_icon.ico'))
         # Window private properties
         self.archiveContents = MyTableModel([[]], [])
@@ -261,12 +262,17 @@ class IffEditorWindow(QMainWindow):
             QHeaderView.Stretch)
         self.file_explorer_view.setModel(self.file_explorer_model)
 
+        #Audio player
+        self.sound_player = Player()
+        
         # Tools Tab Widget
         gbox = QGroupBox()
         gbox.setTitle('Tools')
         tabwidget = QTabWidget()
         tabwidget.addTab(self.file_explorer_view, 'File Explorer')
         tabwidget.addTab(self.text_editor, 'Text Editor')
+        tabwidget.addTab(self.sound_player.widget, 'Sound Player')
+
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(tabwidget)
@@ -321,6 +327,7 @@ class IffEditorWindow(QMainWindow):
 
         # TESTING SECTION
         # self.openFile('png2468.iff')
+        self.fcounter=0
 
     def openFile(self):
         # Close previously open file handle
@@ -350,6 +357,7 @@ class IffEditorWindow(QMainWindow):
             return
         # Always seek to start
         self._file.seek(0)
+
         # Add data to the Archive Contents Table
         self.archiveContents = MyTableModel(
             archive_parser(self._file),
@@ -511,7 +519,8 @@ class IffEditorWindow(QMainWindow):
             comp_size = self.archiveContents.data(
                 selection[5 * i + 2], Qt.DisplayRole)  # get file comp_size
 
-            logging.info(f_name, off, typ, comp_size)
+            #logging.info(f_name, off, typ, comp_size)
+            logging.info(' '.join(map(str, (f_name, off, typ, comp_size))))
 
             if comp_size == 0:
                 continue
@@ -576,22 +585,22 @@ class IffEditorWindow(QMainWindow):
 
         location = QFileDialog.getOpenFileName(
             caption="Select file for Import",
-            filter='Images (*.png;*.jpg;*.dds);;Archives (*.iff;*.zip);;2K16 Models (*.model)')
+            filter='Images (*.png;*.jpg;*.dds);;Archives (*.iff;*.zip);;2K17 Models (*.model);;2K17 xmls (*.SCNE;*.RDAT;*.TXTR);;2K17 audio (*.RESA)')
         logging.info(location)
         if not location[0]:
             return
 
         # Store Old File Data
-        self._file.seek(0x0)
+        self._file.seek(off)
         if typ == 'LZMA':
             logging.info('Compressed LZMA -Import Func-')
-            self._file.seek(off + 0x4)
+            self._file.seek(0x4, 1)
             temp = self._file.read(comp_size)
             l = pylzma.decompress_compat(temp)
         elif typ == 'ZLIB':
             logging.info('Compressed ZLIB -Import Func-')
             temp = self._file.read(comp_size)
-            l = zlib.decompress_compat(temp, -15)
+            l = zlib.decompress(temp, -15)
         else:
             logging.info('No Compression')
             l = self._file.read(decomp_size)
@@ -649,96 +658,110 @@ class IffEditorWindow(QMainWindow):
                 self.import_texture(sched)
             else:
                 logging.info('Not supported Image Type')
+        elif orExt == 'resa':
+            ''' HANDLE AUDIO FILES '''
+            self.sound_player.Stop()
+            self.sound_player.OpenFile(location[0])
+            k = constructOgg(l, k, self.sound_player.metadata)
+            # f = open('tempresa','wb')
+            # f.write(k)
+            # f.close()
+            sched.newData = k
+            sched.newDecompSize = len(k)
 
         elif newExt != orExt:
             logging.info('Replacing with different file, Aborting...')
             return
 
+        #Append Changes to IFF
+        self.writeToZip(sched)
+
         return
 
-        ''' OGG IMPORT '''
-        if str(location[0]).split('.')[-1] == 'ogg' and subfile_type == 'OGG':
-            logging.info('importing ogg')
-            # Storing container temporarily
-            tempiff = StringIO()
-            self._active_file_handle.seek(subarch_off)
-            tempiff.write(self._active_file_handle.read(subarch_size))
+        # ''' OGG IMPORT '''
+        # if str(location[0]).split('.')[-1] == 'ogg' and subfile_type == 'OGG':
+        #     logging.info('importing ogg')
+        #     # Storing container temporarily
+        #     tempiff = StringIO()
+        #     self._active_file_handle.seek(subarch_off)
+        #     tempiff.write(self._active_file_handle.read(subarch_size))
 
-            tempiff.seek(0x18)
-            fixSize = struct.unpack('<I', tempiff.read(4))[0]
-            oldDataSize = struct.unpack('<I', tempiff.read(4))[0]
-            tempiff.seek(0x1C)
-            tempiff.write(struct.pack('<I', len(k) + 8 - fixSize))
+        #     tempiff.seek(0x18)
+        #     fixSize = struct.unpack('<I', tempiff.read(4))[0]
+        #     oldDataSize = struct.unpack('<I', tempiff.read(4))[0]
+        #     tempiff.seek(0x1C)
+        #     tempiff.write(struct.pack('<I', len(k) + 8 - fixSize))
 
-            # oldCompSize=0x2C+fixSize+oldDataSize-8
-            oldCompSize = subarch_size
-            logging.info(
-                'Calculated oldCompSize: ',
-                0x2C + fixSize + oldDataSize - 8)
-            logging.info('Old Iff Size: ', subarch_size)
+        #     # oldCompSize=0x2C+fixSize+oldDataSize-8
+        #     oldCompSize = subarch_size
+        #     logging.info(
+        #         'Calculated oldCompSize: ',
+        #         0x2C + fixSize + oldDataSize - 8)
+        #     logging.info('Old Iff Size: ', subarch_size)
 
-            newCompSize = 0x2C + len(k)
-            logging.info(oldCompSize, newCompSize)
-            tempiff.seek(0x2C)  # seek to audio file start
-            tempiff.write(k)  # write new ogg file data
-            tempiff.seek(0)
-            k = tempiff.read()  # store the whole iff again
+        #     newCompSize = 0x2C + len(k)
+        #     logging.info(oldCompSize, newCompSize)
+        #     tempiff.seek(0x2C)  # seek to audio file start
+        #     tempiff.write(k)  # write new ogg file data
+        #     tempiff.seek(0)
+        #     k = tempiff.read()  # store the whole iff again
 
-            # Scheduler Entry
-            sched = SchedulerEntry()
-            # Scheduler Props
+        #     # Scheduler Entry
+        #     sched = SchedulerEntry()
+        #     # Scheduler Props
 
-            sched.name = subarch_name
-            sched.selmod = 0
-            sched.arch_name = self._active_file.split('\\')[-1]
-            sched.subarch_name = subarch_name
-            sched.subarch_offset = subarch_off
-            sched.subarch_size = subarch_size
-            sched.subfile_name = ''
-            sched.subfile_off = 0
-            sched.subfile_type = 'IFF'
-            sched.subfile_index = 0
-            sched.subfile_size = 0
-            sched.local_off = 0
-            sched.oldCompSize = oldCompSize
-            sched.oldDecompSize = oldCompSize
-            sched.newCompSize = newCompSize
-            sched.newDataSize = newCompSize
-            sched.chksm = zlib.crc32(k)
-            sched.diff = sched.newCompSize - sched.oldCompSize
+        #     sched.name = subarch_name
+        #     sched.selmod = 0
+        #     sched.arch_name = self._active_file.split('\\')[-1]
+        #     sched.subarch_name = subarch_name
+        #     sched.subarch_offset = subarch_off
+        #     sched.subarch_size = subarch_size
+        #     sched.subfile_name = ''
+        #     sched.subfile_off = 0
+        #     sched.subfile_type = 'IFF'
+        #     sched.subfile_index = 0
+        #     sched.subfile_size = 0
+        #     sched.local_off = 0
+        #     sched.oldCompSize = oldCompSize
+        #     sched.oldDecompSize = oldCompSize
+        #     sched.newCompSize = newCompSize
+        #     sched.newDataSize = newCompSize
+        #     sched.chksm = zlib.crc32(k)
+        #     sched.diff = sched.newCompSize - sched.oldCompSize
 
-            self.addToScheduler(sched, k)  # Add to Scheduler
-        elif str(location[0]).split('.')[-1] == 'zip' and subfile_type == 'ZIP' or \
-                str(location[0]).split('.')[-1] == 'gziplzma' and subfile_type == 'GZIP LZMA':
+        #     self.addToScheduler(sched, k)  # Add to Scheduler
+        # elif str(location[0]).split('.')[-1] == 'zip' and subfile_type == 'ZIP' or \
+        #         str(location[0]).split('.')[-1] == 'gziplzma' and subfile_type == 'GZIP LZMA' or \
+        #         str(location[0]).split('.')[-1] == 'gziplzma' and subfile_type == 'GZIP LZMA':
 
-            logging.info('Importing File')
-            # Scheduler Entry
-            sched = SchedulerEntry()
-            # Scheduler Props
+        #     logging.info('Importing File')
+        #     # Scheduler Entry
+        #     sched = SchedulerEntry()
+        #     # Scheduler Props
 
-            sched.name = subarch_name
-            sched.selmod = selmod
-            sched.arch_name = self._active_file.split('\\')[-1]
-            sched.subarch_name = subarch_name
-            sched.subarch_offset = subarch_off
-            sched.subarch_size = subarch_size
+        #     sched.name = subarch_name
+        #     sched.selmod = selmod
+        #     sched.arch_name = self._active_file.split('\\')[-1]
+        #     sched.subarch_name = subarch_name
+        #     sched.subarch_offset = subarch_off
+        #     sched.subarch_size = subarch_size
 
-            sched.subfile_name = subfile_name
-            sched.subfile_off = subfile_off
-            sched.subfile_type = 'REPLACE'
-            sched.subfile_index = subfile_index
-            sched.subfile_size = subfile_size
+        #     sched.subfile_name = subfile_name
+        #     sched.subfile_off = subfile_off
+        #     sched.subfile_type = 'REPLACE'
+        #     sched.subfile_index = subfile_index
+        #     sched.subfile_size = subfile_size
 
-            sched.local_off = 0
-            sched.oldCompSize = subfile_size
-            sched.oldDecompSize = subfile_size
+        #     sched.local_off = 0
+        #     sched.oldCompSize = subfile_size
+        #     sched.oldDecompSize = subfile_size
 
-            sched.newCompSize = len(k)
-            sched.newDataSize = len(k)
-            sched.chksm = zlib.crc32(k)
-            sched.diff = sched.newCompSize - sched.oldCompSize
+        #     sched.newCompSize = len(k)
+        #     sched.newDataSize = len(k)
+        #     sched.chksm = zlib.crc32(k)
+        #     sched.diff = sched.newCompSize - sched.oldCompSize
 
-            self.addToScheduler(sched, k)  # Add to Scheduler
+        #     self.addToScheduler(sched, k)  # Add to Scheduler
 
     def import_texture(self, sched):
         oldTex = dds_file(True, sched.oldData)
@@ -833,6 +856,17 @@ class IffEditorWindow(QMainWindow):
             self.text_editor.clear()
             txtdata = str(data.read())
             self.text_editor.setPlainText(txtdata)
+        elif ext in ['RESA']:
+            '''AUDIO SFX FILES'''
+            self.sound_player.Stop()
+            sleep(1)
+            data.seek(0x2C + 0x2214)
+            randname = 'temp_' + str(self.fcounter) + '.ogg'
+            self.fcounter += 1
+            t = open(randname, 'wb')
+            t.write(data.read())
+            t.close()
+            self.sound_player.OpenFile(randname)
 
         # try to parse over the extension
         if typ == 'UNKNOWN':
@@ -851,19 +885,41 @@ class IffEditorWindow(QMainWindow):
         f.seek(0)
         zipfile = ziptest.customZipFile(f)
 
-        # Modify the file into the zip
-        # Fix Local Header
-        compData = pylzma.compress(sched.newData, dictionary=24)
-        # compData += compData[0:len(compData) // 4]  # inflating file
-        chksm = zlib.crc32(sched.newData) & 0xFFFFFFFF
+        #Get Header
         localHeader = zipfile.localHeaders[sched.name]
-        # Calculate Difference
-        diff = len(compData) + 4 - localHeader.compSize
-        localHeader.crc32 = chksm
-        localHeader.compSize = len(compData) + 4
-        localHeader.decompSize = sched.newDecompSize
-        localHeader.data = b'\x09\x16\x05\x00' + compData
+        compsize = 0
+        # Modify the file into the zip
+        #Check type
 
+        if (sched.type=='LZMA'):
+            # Fix Local Header
+            compData = pylzma.compress(sched.newData, dictionary=24)
+            # compData += compData[0:len(compData) // 4]  # inflating file
+            chksm = zlib.crc32(sched.newData) & 0xFFFFFFFF
+        
+            # Calculate Difference
+            diff = len(compData) + 4 - localHeader.compSize
+            compsize = len(compData) + 4
+            localHeader.data = b'\x09\x16\x05\x00' + compData
+        elif (sched.type=='ZLIB'):
+            #Create compobj
+            compob = zlib.compressobj(zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -15)
+            # Fix Local Header
+            compData = compob.compress(sched.newData) + compob.flush()
+            chksm = zlib.crc32(sched.newData) & 0xFFFFFFFF
+            
+            # Calculate Difference
+            diff = len(compData) - localHeader.compSize
+            compsize = len(compData)
+            localHeader.data = compData
+        else:
+            raise Exception("UNKOWN TYPE. ABORTING")
+
+        # Fix rest stuff
+        localHeader.crc32 = chksm
+        localHeader.compSize = compsize
+        localHeader.decompSize = sched.newDecompSize
+        
         # Fix Central Directory Headers
 
         offset = 0
@@ -876,7 +932,7 @@ class IffEditorWindow(QMainWindow):
             if cdHeader.name == sched.name:
                 found = True
                 cdHeader.crc32 = chksm
-                cdHeader.compSize = len(compData) + 4
+                cdHeader.compSize = compsize
                 cdHeader.decompSize = sched.newDecompSize
             elif found:
                 cdHeader.relOff += diff
@@ -887,7 +943,7 @@ class IffEditorWindow(QMainWindow):
 
         self._file = StringIO()
         self._file.write(zipfile._writeZip())
-        self.openFileData()
+        self.openFileData() #Reopen file
         gc.collect()
 
 

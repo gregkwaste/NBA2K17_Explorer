@@ -8,15 +8,17 @@ sys.path.append('../gk_blender_lib/modules')
 from string_func import *
 from models_2k import Model2k, Model2kPart
 from json_parser import *
+# Zip Custom library
+from ziptest import *
 # Logging
 import logging
 logging.basicConfig(level=logging.INFO)
-
 
 class sub_file:
 
     def __init__(self, data):
         self.files = []
+        self.entries = []
         self.data = data
         # self.size = size
         magic = struct.unpack('>I', data.read(4))[0]
@@ -158,6 +160,9 @@ class sub_file:
                 self.sects.append(
                     (name, sec_offset, sec_size + c_size, '0x504B0304'))
                 self.data.read(c_size)
+                # Add data entry
+
+
             elif id == 0x504B0102:
                 self.data.seek(0x18, 1)  # skip to name size
                 name_size = struct.unpack('<H', self.data.read(2))[0]
@@ -172,8 +177,7 @@ class sub_file:
                 self.infSects.append(
                     (name, sec_offset, sec_size, '0x504B0102'))
             elif id == 0x504B0506:
-                self.data.seek(0x12, 1)
-                sec_offset = self.data.tell() - 22
+                sec_offset = self.data.tell() - 4
                 sec_size = 22
 
                 self.sects.append(('end', sec_offset, sec_size, '0x504B0506'))

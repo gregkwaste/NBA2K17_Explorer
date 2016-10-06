@@ -508,7 +508,7 @@ class GLWidgetQ(QtOpenGL.QGLWidget):
 
         self.compileShaders()
         # Setup TExture
-        f = open('./resources/2k16.dds', 'rb')
+        f = open('./resources/2k17.dds', 'rb')
         data = f.read()
         f.close()
         image = dds_file(True, data)

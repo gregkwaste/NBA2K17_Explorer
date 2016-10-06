@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.setWindowTitle('NBA2K16 Explorer v' + version)
+        self.setWindowTitle(game_title + ' Explorer v' + version)
         self.setWindowIcon(QIcon('./resources/tool_icon.ico'))
         self.setupUi()
         self.actionOpen.triggered.connect(self.open_file_table)
@@ -840,15 +840,15 @@ class MainWindow(QMainWindow):
         gc.collect()
 
         '''Check for audio files'''
-        if '.wav' in name:
+        if ('.wav' in name):
             # Get to proper Offset
+            logging.info(' '.join(map(str, ('Audio Detected'))))
             self._active_file_data.seek(0x2C + 0x2214)
             t = open('temp.ogg', 'wb')
             t.write(self._active_file_data.read())
             t.close()
             self.sound_player.Stop()
             self.sound_player.OpenFile('temp.ogg')
-
             return
 
         ''' CALLING archive_parser TO PARSE THE SUBARCHIVE '''
@@ -1316,15 +1316,15 @@ class MainWindow(QMainWindow):
                                                                       item.data(1), item.data(2), item.data(3), item.data(4), item.data(5), item.data(6)]
 
             logging.info(
-                ' ', join((name, oaname, off, oldSize, newSize, subType, archName)))
+                ' ', join(map(str,(name, oaname, off, oldSize, newSize, subType, archName))))
 
             diff = newSize - oldSize
-            logging.info(' ', join(('Size Difference: ', diff)))
+            logging.info(' ', join(map(str,('Size Difference: ', diff))))
 
             self._active_file_handle.close()  # Close opened files
             if archName not in self._active_file:  # check archive name
                 self._active_file = os.path.join(self.mainDirectory, archName)
-            logging.info(self._active_file)
+            logging.info(str(self._active_file))
 
             f = open(self._active_file, 'r+b')  # open big archive
             f.seek(off)  # seek to iff offset
@@ -1368,7 +1368,7 @@ class MainWindow(QMainWindow):
                 buf = 1
                 while buf:
                     buf = f.read(1024 * 1024 * 1024)
-                    logging.info(len(buf))
+                    logging.info(str(len(buf)))
                     tail.write(buf)
                 tail.close()
                 logging.info("Done Writing tail - TESTING")
@@ -1416,16 +1416,16 @@ class MainWindow(QMainWindow):
                 sub_arch_full_offset = struct.unpack('<Q', f.read(8))[0]
 
                 # Update size in database
-                logging.info(' ', join(('Prev Size: ', self.list[
-                             archiveName_dict[archName]][3][dbIndex][7])))
+                logging.info(' ', join(map(str,('Prev Size: ', self.list[
+                             archiveName_dict[archName]][3][dbIndex][7]))))
                 self.list[archiveName_dict[archName]][3][dbIndex][7] = s + diff
                 self.list[archiveName_dict[archName]][3][dbIndex][3] = s + diff
-                logging.info(' ', join(('New Size: ', self.list[
-                             archiveName_dict[archName]][3][dbIndex][7])))
+                logging.info(' ', join(map(str,('New Size: ', self.list[
+                             archiveName_dict[archName]][3][dbIndex][7]))))
 
                 # Update next file offsets
                 for arch in self.list:
-                    logging.info('Seeking in: ', arch[0], arch[1], arch[2])
+                    logging.info(map(str,('Seeking in: ', arch[0], arch[1], arch[2])))
                     for subarch in arch[3]:
                         # find all siblings with larger offset
                         test_val = subarch[1] + arch[1]
@@ -1445,7 +1445,7 @@ class MainWindow(QMainWindow):
 
             self.schedulerFiles.pop()
             self.scheduler_model.rootItem.childItems.pop()
-            logging.info('Scheduled Files left', len(self.schedulerFiles))
+            logging.info(map(str,('Scheduled Files left', len(self.schedulerFiles))))
 
         self.scheduler.setModel(None)
         gc.collect()

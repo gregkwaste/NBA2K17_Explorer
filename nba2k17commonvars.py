@@ -35,7 +35,8 @@ for i in range(len(archiveName_list)):
 index_table = [0x63000000, 0x6E000000, 0x73000000, 0x74000000, 0x70000000]
 
 zip_types = {0xE: 'LZMA', 0: 'NONE', 0x8: 'ZLIB'}
-version = '0.40'
+version = '0.50'
+game_title = 'NBA 2K17'
 
 if __name__=='__main__':
     print len(archiveName_list),len(archiveName_discr)

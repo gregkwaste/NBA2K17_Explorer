@@ -101,7 +101,7 @@ _internal_guard = object()
 
 
 def find_lib():
-    dll = ctypes.CDLL('libvlc')
+    dll = ctypes.CDLL('libvlc.dll')
     plugin_path = os.path.dirname('libvlc.dll')
 
     return (dll, plugin_path)

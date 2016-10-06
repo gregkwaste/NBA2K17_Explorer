@@ -6,8 +6,8 @@ VSVersionInfo(
   ffi=FixedFileInfo(
     # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
     # Set not needed items to zero 0.
-    filevers=(0, 4, 0, 0),
-    prodvers=(0, 4, 0, 0),
+    filevers=(0, 5, 0, 0),
+    prodvers=(0, 5, 0, 0),
     # Contains a bitmask that specifies the valid bits 'flags'r
     mask=0x3f,
     # Contains a bitmask that specifies the Boolean attributes of the file.
@@ -31,13 +31,13 @@ VSVersionInfo(
         u'040904B0',
         [
         #StringStruct(u'CompanyName', u'3dgamedevblog.com'),
-        StringStruct(u'FileDescription', u'NBA 2K16 Software'),
-        #StringStruct(u'FileVersion', u'0.4.0000.17415'),
+        StringStruct(u'FileDescription', u'NBA 2K17 Software'),
+        #StringStruct(u'FileVersion', u'0.5.0000.17415'),
         #StringStruct(u'InternalName', u'cmd'),
-        StringStruct(u'LegalCopyright', u'© 2015 Coded by gregkwaste'),
+        StringStruct(u'LegalCopyright', u'© 2016 Coded by gregkwaste'),
         #StringStruct(u'OriginalFilename', u'NBA2K_Explorer.Exe'),
-        StringStruct(u'ProductName', u'NBA 2K16 Explorer v0.40'),
-        StringStruct(u'ProductVersion', u'0.4.0000.00000')])
+        StringStruct(u'ProductName', u'NBA 2K17 Explorer v0.50'),
+        StringStruct(u'ProductVersion', u'0.5.0000.00000')])
       ]), 
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
