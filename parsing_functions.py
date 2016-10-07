@@ -135,6 +135,7 @@ class sub_file:
         exit_flag = 0
         while not exit_flag:
             id = struct.unpack('>I', self.data.read(4))[0]
+            logging.info(str(hex(id)))
             if id == 0x504B0304:
                 self.data.seek(0x4, 1)  # skip to compression mode
                 c_type = struct.unpack('<H', self.data.read(2))[0]
@@ -439,3 +440,18 @@ def constructOgg(original, new, metadata):
     # f.close()
     # t.seek(0)
     return t.read()
+
+def extractOgg(data):
+    t=StringIO()
+    data.seek(0xC)
+    count = struct.unpack('<I',data.read(4))[0]
+
+    if (count==1): #Nodummy files
+        data.seek(0x2C)
+        t.write(data.read())
+    elif (count==2): #Dummy files
+        data.seek(0x2C + 0x2214)
+    t.write(data.read())
+    t.seek(0)
+
+    return t

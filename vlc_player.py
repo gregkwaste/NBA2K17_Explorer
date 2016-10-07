@@ -98,7 +98,10 @@ class Player():
             if self.mediaplayer.play() == -1:
                 self.OpenFile()
                 return
-            self.mediaplayer.play()
+            try:
+                self.mediaplayer.play()
+            except:
+                raise Exception("Error while playing")
             self.playbutton.setText("Pause")
             self.timer.start()
             self.isPaused = False
@@ -141,6 +144,11 @@ class Player():
         while val <= 0:
             val = self.mediaplayer.get_length()
             self.metadata['length'] = self.mediaplayer.get_length()
+            if val==0:
+                val=0.01 #Explicitly set length of 0.01 in case the audio has no proper length metadata
+            self.metadata['length'] = val
+            
+
 
     def setVolume(self, Volume):
         """Set the volume

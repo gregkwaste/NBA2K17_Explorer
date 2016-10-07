@@ -327,8 +327,7 @@ class IffEditorWindow(QMainWindow):
 
         # TESTING SECTION
         # self.openFile('png2468.iff')
-        self.fcounter=0
-
+    
     def openFile(self):
         # Close previously open file handle
         if self._file:
@@ -431,7 +430,7 @@ class IffEditorWindow(QMainWindow):
         comp_size = self.archiveContents.data(selmod[2], Qt.DisplayRole)
         decomp_size = self.archiveContents.data(selmod[3], Qt.DisplayRole)
         typ = self.archiveContents.data(selmod[4], Qt.DisplayRole)
-        logging.info('Trying to Parse Model: ', name)
+        logging.info(' '.join(map(str,('Trying to Parse Model: ', name))))
 
         self._file.seek(off)
         data = StringIO()
@@ -491,7 +490,7 @@ class IffEditorWindow(QMainWindow):
             self.glwidget.customModel(parseModel(
                 jsondata, t, jsondata['Model'][mindex]))
             t.close()
-        logging.info('Models Loaded', len(self.glwidget.objects))
+        logging.info(' '.join(map(str,('Models Loaded', len(self.glwidget.objects)))))
 
     def export_items(self, selection):
         logging.info('Exporting Items')
@@ -859,14 +858,10 @@ class IffEditorWindow(QMainWindow):
         elif ext in ['RESA']:
             '''AUDIO SFX FILES'''
             self.sound_player.Stop()
-            sleep(1)
-            data.seek(0x2C + 0x2214)
-            randname = 'temp_' + str(self.fcounter) + '.ogg'
-            self.fcounter += 1
-            t = open(randname, 'wb')
-            t.write(data.read())
+            t = open('temp.ogg', 'wb')
+            t.write(extractOgg(data).read())
             t.close()
-            self.sound_player.OpenFile(randname)
+            self.sound_player.OpenFile()
 
         # try to parse over the extension
         if typ == 'UNKNOWN':
@@ -953,7 +948,7 @@ class PreferencesWindow(QDialog):
         super(PreferencesWindow, self).__init__(parent)
         self.setWindowTitle("Preferences")
         try:
-            key = r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 370240'
+            key = r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 385760'
             reg = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
             key = OpenKey(reg, key)
             val, typ = QueryValueEx(key, 'InstallLocation')
@@ -999,7 +994,7 @@ class PreferencesWindow(QDialog):
 
         horizontal_layout_3 = QHBoxLayout()
         lab = QLabel()
-        lab.setText("Select NBA 2K16 Directory: ")
+        lab.setText("Select "+ game_title +" Directory: ")
         horizontal_layout_3.addWidget(lab)
 
         settingsLineEdit = QLineEdit()

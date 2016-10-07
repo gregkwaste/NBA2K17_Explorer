@@ -727,6 +727,8 @@ class MainWindow(QMainWindow):
         menu.addAction(self.tr("Copy Name"))
         menu.addAction(self.tr("Import Archive"))
         menu.addAction(self.tr("Export Archive"))
+        menu.addAction(self.tr("Export To Modded"))
+
 
         res = menu.exec_(
             self.current_tableView.viewport().mapToGlobal(position))
@@ -742,7 +744,7 @@ class MainWindow(QMainWindow):
             self.statusBar.showMessage(
                 'Copied ' + str(name) + ' to clipboard.')
         elif res.text() == 'Import Archive':
-            logging.info('Importing iff File over: ', name, off, size)
+            logging.info(' '.join(map(str, ('Importing iff File over: ', name, off, size))))
 
             location = QFileDialog.getOpenFileName(
                 caption='Select file', filter='2K16 Archive *.iff;;OGG Audio File *.ogg')
@@ -783,6 +785,9 @@ class MainWindow(QMainWindow):
         elif res.text() == 'Export Archive':
             location = QFileDialog.getSaveFileName(
                 caption="Save File", dir=name, filter='*.iff')
+            if not location[0]:
+                return
+            
             t = open(location[0], 'wb')
             f = open(self._active_file, 'rb')
             # Explicitly handle ogg files
@@ -795,6 +800,25 @@ class MainWindow(QMainWindow):
             t.close()
             self.statusBar.showMessage(
                 'Exported .iff to : ' + str(location[0]))
+        elif res.text() == 'Export To Modded':
+            moddeddir = os.path.join(self.mainDirectory, 'Modded')
+            
+            if not (os.path.exists(moddeddir)):
+                os.makedirs(moddeddir)
+            
+            exportloc = os.path.join(moddeddir, name)
+            t = open(exportloc , 'wb')
+            f = open(self._active_file, 'rb')
+            # Explicitly handle ogg files
+            # if 'wav' in name:
+            #    f.seek(off + 0x2C)
+            # else:
+            f.seek(off)
+            t.write(f.read(size))
+            f.close()
+            t.close()
+            self.statusBar.showMessage(
+                'Exported .iff to : ' + exportloc)
 
     def test(self, rowMid):  # Sub Archive Reader
         # Check if Comments Section was Clicked
@@ -1316,10 +1340,10 @@ class MainWindow(QMainWindow):
                                                                       item.data(1), item.data(2), item.data(3), item.data(4), item.data(5), item.data(6)]
 
             logging.info(
-                ' ', join(map(str,(name, oaname, off, oldSize, newSize, subType, archName))))
+                ' '.join(map(str,(name, oaname, off, oldSize, newSize, subType, archName))))
 
             diff = newSize - oldSize
-            logging.info(' ', join(map(str,('Size Difference: ', diff))))
+            logging.info(' '.join(map(str,('Size Difference: ', diff))))
 
             self._active_file_handle.close()  # Close opened files
             if archName not in self._active_file:  # check archive name
@@ -1399,7 +1423,7 @@ class MainWindow(QMainWindow):
                 f.seek(archiveName_dict[archName] * 0x30, 1)
                 s = struct.unpack('<Q', f.read(8))[0]
                 f.seek(-8, 1)
-                logging.info('Writing ' + str(archName) + ' size to ', str(f.tell()))
+                logging.info(' '.join(map(str,('Writing', archName, 'size to', f.tell()))))
                 f.write(struct.pack('<Q', s + diff))
 
                 f.seek((arch_num + 1) * 0x30)  # seeking to archive definitions
@@ -1408,7 +1432,7 @@ class MainWindow(QMainWindow):
                 # get global file id
                 subarch_id = int(oaname)
                 f.seek(subarch_id * 0x18, 1)
-                logging.info('Found subarchive entry in ', f.tell())
+                logging.info(' '.join(map(str,('Found subarchive entry in ', f.tell()))))
                 s = struct.unpack('<Q', f.read(8))[0]
                 f.seek(-8, 1)
                 f.write(struct.pack('<Q', s + diff))  # update its size
@@ -1416,16 +1440,16 @@ class MainWindow(QMainWindow):
                 sub_arch_full_offset = struct.unpack('<Q', f.read(8))[0]
 
                 # Update size in database
-                logging.info(' ', join(map(str,('Prev Size: ', self.list[
+                logging.info(' '.join(map(str,('Prev Size: ', self.list[
                              archiveName_dict[archName]][3][dbIndex][7]))))
                 self.list[archiveName_dict[archName]][3][dbIndex][7] = s + diff
                 self.list[archiveName_dict[archName]][3][dbIndex][3] = s + diff
-                logging.info(' ', join(map(str,('New Size: ', self.list[
+                logging.info(' '.join(map(str,('New Size: ', self.list[
                              archiveName_dict[archName]][3][dbIndex][7]))))
 
                 # Update next file offsets
                 for arch in self.list:
-                    logging.info(map(str,('Seeking in: ', arch[0], arch[1], arch[2])))
+                    logging.info(' '.join(map(str,('Seeking in: ', arch[0], arch[1], arch[2]))))
                     for subarch in arch[3]:
                         # find all siblings with larger offset
                         test_val = subarch[1] + arch[1]
@@ -1445,7 +1469,7 @@ class MainWindow(QMainWindow):
 
             self.schedulerFiles.pop()
             self.scheduler_model.rootItem.childItems.pop()
-            logging.info(map(str,('Scheduled Files left', len(self.schedulerFiles))))
+            logging.info(' '.join(map(str, ('Scheduled Files left', len(self.schedulerFiles)))))
 
         self.scheduler.setModel(None)
         gc.collect()

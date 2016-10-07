@@ -4,9 +4,9 @@ block_cipher = None
 
 
 a = Analysis(['nba2k17qt.py'],
-             pathex=['..\\gk_blender_lib\\modules\\', 'C:\\Python27-x64\\Lib\\site-packages\\', 'J:\\Projects\\NBA2K17 Explorer'],
+             pathex=['..\\gk_blender_lib\\modules\\', 'C:\\Python27-x64\\Lib\\site-packages', 'J:\\Projects\\NBA2K17 Explorer'],
              binaries=[],
-             datas=None,
+             datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -22,7 +22,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           name='NBA2K_Explorer',
-          debug=True,
+          debug=False,
           strip=False,
           upx=False,
           console=True , version='version.txt', icon='resources\\tool_icon.ico')
